@@ -31,7 +31,7 @@ from modules.reply import faq,menu
 from modules.currency import get_exchange_table
 
 import os
-
+import openai
 table=get_exchange_table()
 print("table",table)
 
