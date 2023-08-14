@@ -47,14 +47,13 @@ def callback():
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     user_msg = event.message.text
-    bot_msg = TextSendMessage(text=f"Hello 你剛才說的是: {user_msg}")
     
     if user_msg in table:
         buy = table[user_msg]["buy"]
         sell = table[user_msg]["sell"]
         bot_msg = TextSendMessage(text=f"{user_msg}\n買價:{buy}\n賣價:{sell}")
     elif user_msg.lower() in ["menu", "選單", "home", "主選單"]:
-        bot_msg = TextSendMessage(text="這是選單回應")
+        bot_msg = menu
     else:
         # 使用 OpenAI API 進行對話生成
         openai_response = openai.Completion.create(
@@ -70,8 +69,4 @@ def handle_message(event):
     )
 
 if __name__ == "__main__":
-    print("[Server Application Starts]")
-    port = int(os.environ.get('PORT', 5001))
-    print(f"[Flask will run on port: {port}]")
-    print(f"If testing locally, run the following command to open a test tunnel: ./ngrok http {port}")
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0")
