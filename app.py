@@ -128,5 +128,14 @@ def handle_location_message(event):
                 ]
             )
         )
+# 如果應用程式被執行執行
 if __name__ == "__main__":
-    app.run(host="0.0.0.0")
+    print("[伺服器應用程式開始運行]")
+    # 取得遠端環境使用的連接端口，若是在本機端測試則預設開啟於port=5001
+    port = int(os.environ.get('PORT', 5001))
+    print(f"[Flask即將運行於連接端口:{port}]")
+    print(f"若在本地測試請輸入指令開啟測試通道: ./ngrok http {port} ")
+    # 啟動應用程式
+    # 本機測試使用127.0.0.1, debug=True
+    # Heroku部署使用 0.0.0.0
+    app.run(host="0.0.0.0", port=port)
