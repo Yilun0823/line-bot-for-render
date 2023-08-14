@@ -151,7 +151,8 @@ def handle_message(event):
                 max_tokens=50
             )
             bot_msg = TextMessage(text=openai_response.choices[0].text)
-
+        else:
+            bot_msg = TextMessage(text=f"open api 已過期")
         line_bot_api.reply_message_with_http_info(
             ReplyMessageRequest(
                 reply_token=event.reply_token,
