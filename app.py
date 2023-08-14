@@ -63,9 +63,10 @@ def handle_message(event):
         sell = table[user_msg]["sell"]
         bot_msg = TextSendMessage(text=f"{user_msg}\n買價:{buy}\n賣價:{sell}")
     else:
+        user_msg_utf8 = user_msg.encode('utf-8')
         openai_response = openai.Completion.create(
             engine="text-davinci-003",
-            prompt=user_msg,
+            prompt=user_msg_utf8,
             max_tokens=50
         )
         bot_msg = TextSendMessage(text=openai_response.choices[0].text)
