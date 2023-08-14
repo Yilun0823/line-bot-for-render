@@ -6,8 +6,7 @@ from linebot.exceptions import (
     InvalidSignatureError
 )
 from linebot.models import (
-    MessageEvent, TextMessage, StickerMessage, LocationMessage,
-    TextSendMessage, StickerSendMessage, LocationSendMessage,
+    MessageEvent, TextMessage, TextSendMessage,
 )
 import openai
 import os
@@ -34,7 +33,6 @@ channel_access_token = os.getenv("CHANNEL_ACCESS_TOKEN")
 
 line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
-
 @app.route("/", methods=['POST'])
 def callback():
     signature = request.headers['X-Line-Signature']
@@ -50,7 +48,7 @@ def callback():
 def handle_message(event):
     user_msg = event.message.text
     bot_msg = TextSendMessage(text=f"Hello 你剛才說的是: {user_msg}")
-
+    
     if user_msg in table:
         buy = table[user_msg]["buy"]
         sell = table[user_msg]["sell"]
@@ -66,7 +64,14 @@ def handle_message(event):
         )
         bot_msg = TextSendMessage(text=openai_response.choices[0].text)
     
-    line_bot_api.reply_message(event.reply_token, bot_msg)
+    line_bot_api.reply_message_with_http_info(
+        event.reply_token,
+        messages=[bot_msg]
+    )
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0")
+    print("[Server Application Starts]")
+    port = int(os.environ.get('PORT', 5001))
+    print(f"[Flask will run on port: {port}]")
+    print(f"If testing locally, run the following command to open a test tunnel: ./ngrok http {port}")
+    app.run(host="0.0.0.0", port=port)
