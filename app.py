@@ -33,6 +33,9 @@ from modules.currency import get_exchange_table
 import openai
 import os
 
+table=get_exchange_table()
+print("table",table)
+
 # 請確保已經設定好 OPENAI_API_KEY
 openai.api_key = os.getenv("OPENAI_API_KEY")
 table=get_exchange_table()
@@ -71,25 +74,10 @@ def handle_message(event):
         print(event)
         line_bot_api = MessagingApi(api_client)
         user_msg = event.message.text
-        
-        excluded_keywords = [
-            "貼圖",
-            "門市照片",
-            "交通資訊",
-            "官方網站",
-            "交通",
-            "捷運",
-            "公車",
-            "營業地址"
-        ]
-        
-        if user_msg in excluded_keywords:
-            # 不對排除的關鍵字進行回答，直接返回
-            return
-        
+
         if user_msg.lower() in ["menu", "選單", "home", "主選單"]:
             bot_msg = menu
-        elif user_msg in ["查詢匯率"]:
+        elif user_msg in table:
             buy = table[user_msg]["buy"]
             sell = table[user_msg]["sell"]
             bot_msg = TextMessage(text=f"{user_msg}\n買價:{buy}\n賣價:{sell}")
