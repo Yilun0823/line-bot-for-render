@@ -74,7 +74,21 @@ def handle_message(event):
         print(event)
         line_bot_api = MessagingApi(api_client)
         user_msg = event.message.text
-
+        excluded_keywords = [
+            "貼圖",
+            "門市照片",
+            "交通資訊",
+            "官方網站",
+            "交通",
+            "捷運",
+            "公車",
+            "營業時間",
+            "營業地址"
+        ]
+        if user_msg in excluded_keywords:
+            # 不對排除的關鍵字進行回答，直接返回
+            return
+        
         if user_msg.lower() in ["menu", "選單", "home", "主選單"]:
             bot_msg = menu
         elif user_msg in table:
