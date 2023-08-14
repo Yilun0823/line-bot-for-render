@@ -72,12 +72,12 @@ def handle_message(event):
         line_bot_api = MessagingApi(api_client)
         user_msg = event.message.text
 
-        if user_msg in table:
+        if user_msg.lower() in ["menu", "選單", "home", "主選單"]:
+            bot_msg = menu
+        elif user_msg in ["查詢匯率"]:
             buy = table[user_msg]["buy"]
             sell = table[user_msg]["sell"]
             bot_msg = TextMessage(text=f"{user_msg}\n買價:{buy}\n賣價:{sell}")
-        elif user_msg.lower() in ["menu", "選單", "home", "主選單"]:
-            bot_msg = menu
         else:
             openai_response = openai.Completion.create(
                 engine="davinci",
