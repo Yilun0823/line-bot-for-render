@@ -1,8 +1,4 @@
-# 運行以下程式需安裝模組: line-bot-sdk, flask, pyquery
-# 安裝方式，輸入指令:
-# pip install line-bot-sdk flask pyquery
-# 運行應用程式:
-# python app.py
+# 匯入所需模組
 from flask import Flask, request, abort
 from linebot import (
     LineBotApi,
@@ -25,23 +21,26 @@ from modules.currency import get_exchange_table
 import os
 import openai
 
+# 取得貨幣匯率表
 table = get_exchange_table()
-print("table", table)
 
+# 初始化 Flask 應用程式
 app = Flask(__name__)
 
+# 取得環境變數
 channel_secret = os.getenv("CHANNEL_SECRET")
 channel_access_token = os.getenv("CHANNEL_ACCESS_TOKEN")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+# 初始化 LineBotApi 和 WebhookHandler
 line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
+# 設定路由，處理 Line Bot Webhook 請求
 @app.route("/", methods=['POST'])
 def callback():
     signature = request.headers['X-Line-Signature']
     body = request.get_data(as_text=True)
-    print("#" * 40)
     app.logger.info("Request body: " + body)
     
     try:
@@ -49,9 +48,10 @@ def callback():
     except InvalidSignatureError:
         app.logger.info("無效的簽名。請檢查您的通道訪問權杖/通道秘密。")
         abort(400)
-    print("#" * 40)
+    
     return 'OK'
 
+# 處理文字訊息
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     user_msg = event.message.text
@@ -63,19 +63,22 @@ def handle_message(event):
         sell = table[user_msg]["sell"]
         bot_msg = TextSendMessage(text=f"{user_msg}\n買價:{buy}\n賣價:{sell}")
     else:
-        user_msg_utf8 = user_msg.encode('utf-8')
-        openai_response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=user_msg_utf8,
-            max_tokens=50
-        )
-        bot_msg = TextSendMessage(text=openai_response.choices[0].text)
+        try:
+            openai_response = openai.Completion.create(
+                engine="text-davinci-003",
+                prompt=user_msg,
+                max_tokens=50
+            )
+            bot_msg = TextSendMessage(text=openai_response.choices[0].text)
+        except Exception as e:
+            bot_msg = TextSendMessage(text="抱歉，出現了一些問題。")
 
     line_bot_api.reply_message(
         event.reply_token,
         bot_msg
     )
 
+# 處理貼圖訊息
 @handler.add(MessageEvent, message=StickerMessage)
 def handle_sticker_message(event):
     sticker_id = event.message.sticker_id
@@ -86,12 +89,13 @@ def handle_sticker_message(event):
         event.reply_token,
         [
             StickerMessage(package_id="6325", sticker_id="10979904"),
-            TextSendMessage(text="您剛剛傳了一張貼圖。以下是該貼圖的相關信息："),
+            TextSendMessage(text="您剛剛傳了一張貼圖。以下是該貼圖的相關資訊："),
             TextSendMessage(text=f"package_id 是 {package_id}，sticker_id 是 {sticker_id}。"),
             TextSendMessage(text=f"關鍵詞為：{keywords}。"),
         ]
     )
 
+# 處理位置訊息
 @handler.add(MessageEvent, message=LocationMessage)
 def handle_location_message(event):
     latitude = event.message.latitude
