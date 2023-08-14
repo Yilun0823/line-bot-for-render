@@ -86,14 +86,54 @@ def handle_message(event):
             )
             bot_msg = TextMessage(text=openai_response.choices[0].text)
 
-        line_bot_api.reply_message_with_http_info(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[
-                    bot_msg
-                ]
+@handler.add(MessageEvent, message=TextMessageContent)
+def handle_message(event):
+    with ApiClient(configuration) as api_client:
+        print("使用者傳入文字訊息了！")
+        print(event)
+        line_bot_api = MessagingApi(api_client)
+        user_msg = event.message.text
+
+        exclude_keywords = [
+            "我要使用其他的.py回答",
+            "營業時間",
+            "貼圖",
+            "門市照片",
+            "交通資訊",
+            "官方網站",
+            "交通",
+            "捷運",
+            "公車",
+            "營業地址",
+            "營業地址"
+        ]
+
+        if user_msg.lower() in ["menu", "選單", "home", "主選單"]:
+            bot_msg = menu
+        elif user_msg in ["查詢匯率"]:
+            buy = table[user_msg]["buy"]
+            sell = table[user_msg]["sell"]
+            bot_msg = TextMessage(text=f"{user_msg}\n買價:{buy}\n賣價:{sell}")
+        elif any(keyword in user_msg for keyword in exclude_keywords):
+            bot_msg = None  # 不回覆任何訊息
+        else:
+            openai_response = openai.Completion.create(
+                engine="davinci",
+                prompt=user_msg,
+                max_tokens=50
             )
-        )
+            bot_msg = TextMessage(text=openai_response.choices[0].text)
+
+        if bot_msg:
+            line_bot_api.reply_message_with_http_info(
+                ReplyMessageRequest(
+                    reply_token=event.reply_token,
+                    messages=[
+                        bot_msg
+                    ]
+                )
+            )
+
 @handler.add(MessageEvent, message=StickerMessageContent)
 def handle_sticker_message(event):
     with ApiClient(configuration) as api_client:
