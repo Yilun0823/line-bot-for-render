@@ -66,7 +66,6 @@ def callback():
     print("#" * 40)
     return 'OK'
 
-@handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
     with ApiClient(configuration) as api_client:
         # 當使用者傳入文字訊息時
@@ -74,43 +73,46 @@ def handle_message(event):
         print(event)
         line_bot_api = MessagingApi(api_client)
         user_msg = event.message.text
-        excluded_keywords = [
-            "貼圖",
-            "門市照片",
-            "交通資訊",
-            "官方網站",
-            "交通",
-            "捷運",
-            "公車",
-            "營業時間",
-            "營業地址"
-        ]
-        if user_msg in excluded_keywords:
-            # 不對排除的關鍵字進行回答，直接返回
-            return
-        
         if user_msg.lower() in ["menu", "選單", "home", "主選單"]:
             bot_msg = menu
-        elif user_msg in table:
+        elif user_msg in ["查詢匯率"]:
             buy = table[user_msg]["buy"]
             sell = table[user_msg]["sell"]
             bot_msg = TextMessage(text=f"{user_msg}\n買價:{buy}\n賣價:{sell}")
         else:
-            openai_response = openai.Completion.create(
-                engine="davinci",
-                prompt=user_msg,
-                max_tokens=50
-            )
-            bot_msg = TextMessage(text=openai_response.choices[0].text)
+            excluded_keywords = [
+                "貼圖",
+                "門市照片",
+                "交通資訊",
+                "官方網站",
+                "交通",
+                "捷運",
+                "公車",
+                "查詢匯率",
+                "營業時間",
+                "營業地址"
+            ]
 
-        line_bot_api.reply_message_with_http_info(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[
-                    bot_msg
-                ]
+            if user_msg in excluded_keywords:
+                # 在排除的關鍵字內，跳過執行
+                pass
+            else:
+                openai_response = openai.Completion.create(
+                    engine="davinci",
+                    prompt=user_msg,
+                    max_tokens=50
+                )
+                bot_msg = TextMessage(text=openai_response.choices[0].text)
+
+            line_bot_api.reply_message_with_http_info(
+                ReplyMessageRequest(
+                    reply_token=event.reply_token,
+                    messages=[
+                        bot_msg
+                    ]
+                )
             )
-        )
+            
 @handler.add(MessageEvent, message=StickerMessageContent)
 def handle_sticker_message(event):
     with ApiClient(configuration) as api_client:
