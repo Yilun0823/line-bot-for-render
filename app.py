@@ -136,31 +136,7 @@ def handle_location_message(event):
                 ]
             )
         )
-@handler.add(MessageEvent, message=TextMessageContent)
-def handle_message(event):
-    with ApiClient(configuration) as api_client:
-        # 當使用者傳入文字訊息時
-        print("使用者傳入文字訊息了！")
-        print(event)
-        line_bot_api = MessagingApi(api_client)
-        user_msg = event.message.text
-        if:
-            openai_response = openai.Completion.create(
-                engine="davinci",
-                prompt=user_msg,
-                max_tokens=50
-            )
-            bot_msg = TextMessage(text=openai_response.choices[0].text)
-        else:
-            bot_msg = TextMessage(text=f"open api 已過期")
-        line_bot_api.reply_message_with_http_info(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[
-                    bot_msg
-                ]
-            )
-        )
+
 # 如果應用程式被執行執行
 if __name__ == "__main__":
     print("[伺服器應用程式開始運行]")
