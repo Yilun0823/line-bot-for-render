@@ -107,24 +107,50 @@ def handle_message(event):
 
 # 使用 OpenAI GPT-3.5 模型生成回答的函數
 def generate_openai_response(user_input):
-    response = openai.Completion.create(
-        engine="gpt-3.5-turbo",  #GPT-3.5 的引擎
-        prompt=user_input,  # 輸入提示
-        max_tokens=50  # 最大生成的標記數
-    )
-    return response.choices[0].text.strip()
-
-def generate_text(prompt):
     try:
-        response = openai.Completion.create(
-            engine="davinci",  # 使用 GPT-3.5 的 davinci 引擎
-            prompt=prompt,
-            max_tokens=50  # 生成的最大標記數
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # GPT-3.5 的引擎
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": user_input}
+            ],
+            max_tokens=50  # 最大生成的標記數
         )
-        generated_text = response.choices[0].text.strip()
-        return generated_text
+        return response.choices[0].text.strip()
     except Exception as e:
-        return "抱歉，出了點問題，無法生成回答。"
+        return f"抱歉，出了點問題，無法生成回答。錯誤信息: {str(e)}"
+
+@handler.add(MessageEvent, message=TextMessageContent)
+def handle_message(event):
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+        user_msg = event.message.text
+
+        bot_msg = None  # 设置默认的 bot_msg
+
+        if user_msg in faq:
+            bot_msg = faq[user_msg]
+        elif user_msg.lower() in ["menu","選單","home","主選單"]:
+            bot_msg = menu
+        elif user_msg in table:
+            buy = table[user_msg]["buy"]
+            sell = table[user_msg]["sell"]
+            bot_msg = TextMessage(text=f"{user_msg}\n買價:{buy}\n賣價:{sell}")
+        
+        # 如果没有匹配的回答，使用 OpenAI GPT-3.5 生成回答
+        if bot_msg is None:
+            generated_text = generate_openai_response(user_msg)  # 调用生成 OpenAI 回答的函数
+            bot_msg = TextMessage(text=generated_text)
+
+        line_bot_api.reply_message_with_http_info(
+            ReplyMessageRequest(
+                reply_token=event.reply_token,
+                messages=[
+                    bot_msg
+                ]
+            )
+        )
+
 if __name__ == "__main__":
     print("[服務器應用程序開始運行]")
     # 獲取遠程環境使用的連接端口，若在本地測試則默認開啟於 port=5001
