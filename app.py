@@ -120,37 +120,6 @@ def generate_openai_response(user_msg):
     except Exception as e:
         return f"抱歉，出了點問題，無法生成回答。錯誤信息: {str(e)}"
 
-@handler.add(MessageEvent, message=TextMessageContent)
-def handle_message(event):
-    with ApiClient(configuration) as api_client:
-        line_bot_api = MessagingApi(api_client)
-        user_msg = event.message.text
-
-        bot_msg = None  # 设置默认的 bot_msg
-
-        if user_msg in faq:
-            bot_msg = faq[user_msg]
-        elif user_msg.lower() in ["menu","選單","home","主選單"]:
-            bot_msg = menu
-        elif user_msg in table:
-            buy = table[user_msg]["buy"]
-            sell = table[user_msg]["sell"]
-            bot_msg = TextMessage(text=f"{user_msg}\n買價:{buy}\n賣價:{sell}")
-        
-        # 如果没有匹配的回答，使用 OpenAI GPT-3.5 生成回答
-        if bot_msg is None:
-            generated_text = generate_openai_response(user_msg)  # 调用生成 OpenAI 回答的函数
-            bot_msg = TextMessage(text=generated_text)
-
-        line_bot_api.reply_message_with_http_info(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[
-                    bot_msg
-                ]
-            )
-        )
-
 if __name__ == "__main__":
     print("[服務器應用程序開始運行]")
     # 獲取遠程環境使用的連接端口，若在本地測試則默認開啟於 port=5001
