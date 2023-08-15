@@ -27,37 +27,39 @@ from linebot.v3.webhooks import (
     LocationMessageContent,
 )
 
-from modules.reply import faq,menu
+from modules.reply import faq, menu
 from modules.currency import get_exchange_table
 
-import openai
 import os
+import openai
 
-table=get_exchange_table()
-print("table",table)
+# 獲取貨幣匯率表
+table = get_exchange_table()
+print("table", table)
 
-# 請確保已經設定好 OPENAI_API_KEY
-openai.api_key = os.getenv("OPENAI_API_KEY")
-table=get_exchange_table()
-print("table",table)
-
+# 創建 Flask 應用
 app = Flask(__name__)
 
-channel_serect=os.getenv("CHANNEL_SECRET")
-channel_access_token=os.getenv("CHANNEL_ACCESS_TOKEN")
+line_bot_api = None
+handler = None
+configuration = None
 
-configuration = Configuration(access_token=channel_access_token)
-handler = WebhookHandler(channel_serect)
+# 設置 Line Bot 配置
+channel_secret = os.getenv("CHANNEL_SECRET")
+channel_access_token = os.getenv("CHANNEL_ACCESS_TOKEN")
+
+# 設置 OpenAI API 密鑰
+openai.api_key = "YOUR_OPENAI_API_KEY"
 
 @app.route("/", methods=['POST'])
 def callback():
-    # get X-Line-Signature header value
+    # 獲取 X-Line-Signature 頭部值
     signature = request.headers['X-Line-Signature']
-    # get request body as text
+    # 獲取請求體作為文本
     body = request.get_data(as_text=True)
     print("#" * 40)
     app.logger.info("Request body: " + body)
-    # handle webhook body
+    # 處理 Webhook 請求體
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
@@ -66,104 +68,54 @@ def callback():
     print("#" * 40)
     return 'OK'
 
+@handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
     with ApiClient(configuration) as api_client:
-        # 當使用者傳入文字訊息時
-        print("使用者傳入文字訊息了！")
+        # 當用戶傳入文字消息時
+        print("用戶傳入文字消息了！")
         print(event)
         line_bot_api = MessagingApi(api_client)
         user_msg = event.message.text
-        if user_msg.lower() in ["menu", "選單", "home", "主選單"]:
+        bot_msg = TextMessage(text=f"Hello 你剛才說的是: {user_msg}")
+
+        if user_msg in faq:
+            bot_msg = faq[user_msg]
+        elif user_msg.lower() in ["menu", "選單", "home", "主選單"]:
             bot_msg = menu
-        elif user_msg in ["查詢匯率"]:
+        elif user_msg in table:
             buy = table[user_msg]["buy"]
             sell = table[user_msg]["sell"]
             bot_msg = TextMessage(text=f"{user_msg}\n買價:{buy}\n賣價:{sell}")
-        else:
-            excluded_keywords = [
-                "貼圖",
-                "門市照片",
-                "交通資訊",
-                "官方網站",
-                "交通",
-                "捷運",
-                "公車",
-                "查詢匯率",
-                "營業時間",
-                "營業地址"
-            ]
 
-            if user_msg in excluded_keywords:
-                # 在排除的關鍵字內，跳過執行
-                pass
-            else:
-                openai_response = openai.Completion.create(
-                    engine="davinci",
-                    prompt=user_msg,
-                    max_tokens=50
-                )
-                bot_msg = TextMessage(text=openai_response.choices[0].text)
+        # 使用 OpenAI GPT-3.5 模型生成回答
+        openai_response = generate_openai_response(user_msg)
+        bot_msg = TextMessage(text=openai_response)
 
-            line_bot_api.reply_message_with_http_info(
-                ReplyMessageRequest(
-                    reply_token=event.reply_token,
-                    messages=[
-                        bot_msg
-                    ]
-                )
-            )
-            
-@handler.add(MessageEvent, message=StickerMessageContent)
-def handle_sticker_message(event):
-    with ApiClient(configuration) as api_client:
-        # 當使用者傳入貼圖時
-        line_bot_api = MessagingApi(api_client)
-        sticker_id = event.message.sticker_id
-        package_id = event.message.package_id
-        keywords = ", ".join(event.message.keywords)
-        # 可以使用的貼圖清單
-        # https://developers.line.biz/en/docs/messaging-api/sticker-list/
         line_bot_api.reply_message_with_http_info(
             ReplyMessageRequest(
                 reply_token=event.reply_token,
                 messages=[
-                    StickerMessage(package_id="6325", sticker_id="10979904"),
-                    TextMessage(text=f"You just sent a sticker. Here is the information of the sticker:"),
-                    TextMessage(text=f"package_id is {package_id}, sticker_id is {sticker_id}."),
-                    TextMessage(text=f"The keywords are {keywords}."),
+                    bot_msg
                 ]
             )
         )
 
-@handler.add(MessageEvent, message=LocationMessageContent)
-def handle_location_message(event):
-    with ApiClient(configuration) as api_client:
-        # 當使用者傳入地理位置時
-        line_bot_api = MessagingApi(api_client)
-        latitude = event.message.latitude
-        longitude = event.message.longitude
-        address = event.message.address
-        line_bot_api.reply_message_with_http_info(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[
-                    TextMessage(text=f"You just sent a location message."),
-                    TextMessage(text=f"The latitude is {latitude}."),
-                    TextMessage(text=f"The longitude is {longitude}."),
-                    TextMessage(text=f"The address is {address}."),
-                    LocationMessage(title="Here is the location you sent.", address=address, latitude=latitude, longitude=longitude)
-                ]
-            )
-        )
+# 使用 OpenAI GPT-3.5 模型生成回答的函數
+def generate_openai_response(user_input):
+    response = openai.Completion.create(
+        engine="davinci",  # 選擇 GPT-3 的引擎，可以嘗試 curie 或其他
+        prompt=user_input,  # 輸入提示
+        max_tokens=50  # 最大生成的標記數
+    )
+    return response.choices[0].text.strip()
 
-# 如果應用程式被執行執行
 if __name__ == "__main__":
-    print("[伺服器應用程式開始運行]")
-    # 取得遠端環境使用的連接端口，若是在本機端測試則預設開啟於port=5001
+    print("[服務器應用程序開始運行]")
+    # 獲取遠程環境使用的連接端口，若在本地測試則默認開啟於 port=5001
     port = int(os.environ.get('PORT', 5001))
     print(f"[Flask即將運行於連接端口:{port}]")
     print(f"若在本地測試請輸入指令開啟測試通道: ./ngrok http {port} ")
-    # 啟動應用程式
-    # 本機測試使用127.0.0.1, debug=True
-    # Heroku部署使用 0.0.0.0
+    # 啟動應用程序
+    # 本地測試使用 127.0.0.1，debug=True
+    # Heroku 部署使用 0.0.0.0
     app.run(host="0.0.0.0", port=port)
