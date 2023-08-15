@@ -48,6 +48,9 @@ configuration = None
 channel_secret = os.getenv("CHANNEL_SECRET")
 channel_access_token = os.getenv("CHANNEL_ACCESS_TOKEN")
 
+# 設置 OpenAI API 密鑰
+openai.api_key = "YOUR_OPENAI_API_KEY"
+
 # 創建 Configuration 對象
 configuration = Configuration(access_token=channel_access_token)
 
@@ -115,6 +118,16 @@ def generate_openai_response(user_input):
     )
     return response.choices[0].text.strip()
 
+def generate_text(prompt):
+    try:
+        response = openai.Completion.create(
+            prompt=prompt,
+            max_tokens=50  # 生成的最大標記數
+        )
+        generated_text = response.choices[0].text.strip()
+        return generated_text
+    except Exception as e:
+        return "抱歉，出了點問題，無法生成回答。"
 if __name__ == "__main__":
     print("[服務器應用程序開始運行]")
     # 獲取遠程環境使用的連接端口，若在本地測試則默認開啟於 port=5001
