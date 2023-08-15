@@ -49,7 +49,9 @@ channel_secret = os.getenv("CHANNEL_SECRET")
 channel_access_token = os.getenv("CHANNEL_ACCESS_TOKEN")
 
 # 設置 OpenAI API 密鑰
-openai.api_key = "OPENAI_API_KEY"
+openai.organization = "OPENAI_API_KEY"
+openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.Model.list()
 
 # 創建 Configuration 對象
 configuration = Configuration(access_token=channel_access_token)
@@ -108,7 +110,7 @@ def handle_message(event):
 # 使用 OpenAI GPT-3.5 模型生成回答的函數
 def generate_openai_response(user_input):
     response = openai.Completion.create(
-        engine="davinci",  # 選擇 GPT-3 的引擎，可以嘗試 curie 或其他
+        engine="gpt-3.5-turbo",  #GPT-3.5 的引擎
         prompt=user_input,  # 輸入提示
         max_tokens=50  # 最大生成的標記數
     )
