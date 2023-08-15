@@ -9,6 +9,7 @@ def generate_text(prompt):
         prompt=prompt,
         max_tokens=50  # 生成的最大標記數
     )
+    print("OpenAI API 响应：", response)
     return response.choices[0].text.strip()
 
 if __name__ == "__main__":
