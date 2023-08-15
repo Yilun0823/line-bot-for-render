@@ -131,8 +131,8 @@ menu = TemplateMessage(
                 text='點選下方按鈕開始互動',
                 actions=[
                     MessageAction(
-                        label='查詢匯率',
-                        text='查詢匯率'
+                        label='我的網站',
+                        text='https://sites.google.com/view/my-first-linebot'
                     ),
                     MessageAction(
                         label='營業時間',
