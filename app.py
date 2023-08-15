@@ -73,7 +73,20 @@ def callback():
         abort(400)
     print("#" * 40)
     return 'OK'
-
+# 使用 OpenAI GPT-3.5 模型生成回答的函數
+def generate_openai_response(user_msg):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # GPT-3.5 的引擎
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": user_msg}
+            ],
+            max_tokens=50  # 最大生成的標記數
+        )
+        return response.choices[0].message['content']  # 修正获取生成文本的方式
+    except Exception as e:
+        return f"抱歉，出了點問題，無法生成回答。錯誤信息: {str(e)}"
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
     with ApiClient(configuration) as api_client:
@@ -84,7 +97,7 @@ def handle_message(event):
 
         if user_msg in faq:
             bot_msg = faq[user_msg]
-        elif user_msg.lower() in ["menu","選單","home","主選單"]:
+        elif user_msg.lower() in ["menu", "選單", "home", "主選單"]:
             bot_msg = menu
         elif user_msg in table:
             buy = table[user_msg]["buy"]
@@ -104,21 +117,6 @@ def handle_message(event):
                 ]
             )
         )
-
-# 使用 OpenAI GPT-3.5 模型生成回答的函數
-def generate_openai_response(user_msg):
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # GPT-3.5 的引擎
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": user_msg}
-            ],
-            max_tokens=50  # 最大生成的標記數
-        )
-        return response.choices[0].text.strip()
-    except Exception as e:
-        return f"抱歉，出了點問題，無法生成回答。錯誤信息: {str(e)}"
 
 if __name__ == "__main__":
     print("[服務器應用程序開始運行]")
