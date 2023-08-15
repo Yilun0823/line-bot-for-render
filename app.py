@@ -77,25 +77,25 @@ def callback():
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
     with ApiClient(configuration) as api_client:
-        # 當用戶傳入文字消息時
-        print("用戶傳入文字消息了！")
+        # 當使用者傳入文字訊息時
+        print("使用者傳入文字訊息了！")
         print(event)
         line_bot_api = MessagingApi(api_client)
         user_msg = event.message.text
-        bot_msg = TextMessage(text=f"Hello 你剛才說的是: {user_msg}")
 
         if user_msg in faq:
             bot_msg = faq[user_msg]
-        elif user_msg.lower() in ["menu", "選單", "home", "主選單"]:
+        elif user_msg.lower() in ["menu","選單","home","主選單"]:
             bot_msg = menu
         elif user_msg in table:
             buy = table[user_msg]["buy"]
             sell = table[user_msg]["sell"]
             bot_msg = TextMessage(text=f"{user_msg}\n買價:{buy}\n賣價:{sell}")
 
-        # 使用 OpenAI GPT-3.5 模型生成回答
-        openai_response = generate_openai_response(user_msg)
-        bot_msg = TextMessage(text=openai_response)
+        # 如果沒有匹配的回答，使用 OpenAI GPT-3.5 生成回答
+        if bot_msg is None:
+            generated_text = generate_text(user_msg)
+            bot_msg = TextMessage(text=generated_text)
 
         line_bot_api.reply_message_with_http_info(
             ReplyMessageRequest(
