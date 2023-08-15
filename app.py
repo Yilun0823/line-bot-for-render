@@ -81,8 +81,6 @@ def callback():
 def handle_message(event):
     with ApiClient(configuration) as api_client:
         # 當使用者傳入文字訊息時
-        print("使用者傳入文字訊息了！")
-        print(event)
         line_bot_api = MessagingApi(api_client)
         user_msg = event.message.text
 
