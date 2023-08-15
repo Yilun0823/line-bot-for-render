@@ -49,9 +49,7 @@ channel_secret = os.getenv("CHANNEL_SECRET")
 channel_access_token = os.getenv("CHANNEL_ACCESS_TOKEN")
 
 # 設置 OpenAI API 密鑰
-openai.organization = "OPENAI_API_KEY"
 openai.api_key = os.getenv("OPENAI_API_KEY")
-openai.Model.list()
 
 # 創建 Configuration 對象
 configuration = Configuration(access_token=channel_access_token)
