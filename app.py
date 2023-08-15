@@ -32,7 +32,7 @@ from modules.currency import get_exchange_table
 
 import os
 import openai
-from openai import generate_tex
+from openai import generate_text
 # 獲取貨幣匯率表
 table = get_exchange_table()
 print("table", table)
