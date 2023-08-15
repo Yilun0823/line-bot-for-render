@@ -106,13 +106,13 @@ def handle_message(event):
         )
 
 # 使用 OpenAI GPT-3.5 模型生成回答的函數
-def generate_openai_response(user_input):
+def generate_openai_response(user_msg):
     try:
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",  # GPT-3.5 的引擎
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": user_input}
+                {"role": "user", "content": user_msg}
             ],
             max_tokens=50  # 最大生成的標記數
         )
