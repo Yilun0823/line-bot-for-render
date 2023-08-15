@@ -48,8 +48,11 @@ configuration = None
 channel_secret = os.getenv("CHANNEL_SECRET")
 channel_access_token = os.getenv("CHANNEL_ACCESS_TOKEN")
 
-# 初始化 handler 對象
-handler = WebhookHandler(channel_secret)
+# 創建 Configuration 對象
+configuration = Configuration(access_token=channel_access_token)
+
+# 創建 WebhookHandler 對象
+handler = WebhookHandler(channel_serect)
 
 # 設置 OpenAI API 密鑰
 openai.api_key = "YOUR_OPENAI_API_KEY"
